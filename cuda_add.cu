@@ -32,7 +32,7 @@ void sock_cli() {
   cli._recv(r, 4);
 }
 
-void computation() {
+void computation(bool sync) {
   int N = 120 * (1 << 20);
   float *x, *y, *d_x, *d_y;
   x = (float *)malloc(N * sizeof(float));
@@ -54,7 +54,8 @@ void computation() {
   cudaMemcpy(d_y, y, N * sizeof(float), cudaMemcpyHostToDevice);
 
   // sync
-  sock_cli();
+  if (sync)
+    sock_cli();
   cudaEventRecord(start);
   double s = time_now();
   // Perform SAXPY on 1M elements
@@ -109,16 +110,18 @@ int main(int argc, char *argv[]) {
   if (argc < 2) {
     printf("usage: ./a <mode>");
   }
-  char mode = std::atoi(argv[1]);
+  int mode = std::atoi(argv[1]);
   if (mode == 0) {
     // serv 
     printf("server mode\n");
-    
     pin_mem();
   } else {
     printf("cli mode\n");
-    computation();
-
+    if (mode == 1) {
+      computation(true);
+    } else {
+      computation(false);
+    }
   }
 
 }
